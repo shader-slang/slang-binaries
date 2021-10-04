@@ -77,7 +77,7 @@ function slangUtil.findLibraries(basePath, inMatchName, matchFunc)
         
         if not isTargetWindows() then
             -- If the name starts with "lib" strip it
-            libName = trimPrefix(libName, "lib")
+            libName = slangUtil.trimPrefix(libName, "lib")
         end
     
         if matchFunc == nil or matchFunc(libName) then
