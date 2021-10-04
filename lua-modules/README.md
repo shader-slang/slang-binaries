@@ -70,3 +70,8 @@ This format is likely to change in the future to provide more more nuanced infor
 * Splitting out commonly used lua functions into a modules
 
 Note that the default overriding location mechanism used currently doesn't use links/softlinks it replaces paths in build files. That may not work for some scenarios.
+
+# slangutil module
+
+Useful functionality used for premake. 
+
