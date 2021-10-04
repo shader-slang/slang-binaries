@@ -38,12 +38,21 @@ function slangUtil.appendTable(a, b)
     end
 end
 
+function slangUtil.shallowCopyTable(t)
+  local u = { }
+  for k, v in pairs(t) 
+  do 
+    u[k] = v 
+  end
+  return setmetatable(u, getmetatable(t))
+end
+
 --
 -- Given two (array) tables returns the concatination 
 --
 function slangUtil.concatTables(a, b)
-    a = table.table_copy(a)
-    appendTable(a, b)
+    a = slangUtil.shallowCopyTable(a)
+    slangUtil.appendTable(a, b)
     return a
 end
 
