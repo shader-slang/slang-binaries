@@ -6,7 +6,7 @@
 -- http://lua-users.org/wiki/ModulesTutorial
 --
 
-local slangpack =  {}
+local slangPack =  {}
 
 local function displayProgress(total, current)  
     local ratio = current / total;  
@@ -37,7 +37,7 @@ end
 -- Update dependencies
 -- 
 
-function slangpack.updateDeps(platformName, jsonName, noProgress)
+function slangPack.updateDeps(platformName, jsonName, noProgress)
     if jsonName == nil then
         jsonName = "deps/target-deps.json"
     end
@@ -170,7 +170,7 @@ function slangpack.updateDeps(platformName, jsonName, noProgress)
     end
 end
 
-function slangpack.addOptions()    
+function slangPack.addOptions()    
     newoption { 
         trigger     = "deps",
         description = "(Optional) If true downloads binaries defined in the deps/target-deps.json",
@@ -188,4 +188,4 @@ function slangpack.addOptions()
     }
 end
 
-return slangpack
+return slangPack
