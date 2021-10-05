@@ -6,6 +6,8 @@
 -- http://lua-users.org/wiki/ModulesTutorial
 --
 
+local slangUtil = require("slang-util")
+
 local slangPack =  {}
 
 local function displayProgress(total, current)  
@@ -34,10 +36,24 @@ local function readJSONFromFile(path)
 end
 
 --
+-- Maybe update dependencies (if --deps=true)
+-- 
+
+function slangPack.maybeUpdateDependencies(platformName, jsonName)
+    local updateDeps = slangUtil.getBoolOption("deps")
+    
+    if updateDeps then
+        return slangPack.updateDependencies(platformName, jsonName)
+    end
+end
+
+--
 -- Update dependencies
 -- 
 
-function slangPack.updateDeps(platformName, jsonName, noProgress)
+function slangPack.updateDependencies(platformName, jsonName)   
+    local noProgress = slangUtil.getBoolOption("no-progress")
+
     if jsonName == nil then
         jsonName = "deps/target-deps.json"
     end
@@ -170,22 +186,22 @@ function slangPack.updateDeps(platformName, jsonName, noProgress)
     end
 end
 
-function slangPack.addOptions()    
-    newoption { 
-        trigger     = "deps",
-        description = "(Optional) If true downloads binaries defined in the deps/target-deps.json",
-        value       = "bool",
-        default     = "false",
-        allowed     = { { "true", "True"}, { "false", "False" } }
-    }
-    
-    newoption { 
-        trigger     = "no-progress",
-        description = "(Optional) If true doesn't display progress bars when downloading",
-        value       = "boolean",
-        default     = "false",
-        allowed     = { { "true", "True"}, { "false", "False" } }
-    }
-end
+-- Importing the module should make these automatically available
+  
+newoption { 
+    trigger     = "deps",
+    description = "(Optional) If true downloads binaries defined in the deps/target-deps.json",
+    value       = "bool",
+    default     = "false",
+    allowed     = { { "true", "True"}, { "false", "False" } }
+}
+
+newoption { 
+    trigger     = "no-progress",
+    description = "(Optional) If true doesn't display progress bars when downloading",
+    value       = "boolean",
+    default     = "false",
+    allowed     = { { "true", "True"}, { "false", "False" } }
+}
 
 return slangPack
