@@ -47,6 +47,14 @@ A deps file looks something like
                     "windows-x86_64" : "llvm-tot-14-win64-Release.zip",
                     "linux-x86_64" : "llvm-tot-14-linux-x86_64-Release.zip"
                 }
+            },
+            {
+                "name" : "slang-binaries",
+                "type" : "submodule"
+            },
+            {
+                "name" : "slang",
+                "type" : "submodule"
             }
         ]
     }
@@ -55,12 +63,19 @@ A deps file looks something like
 
 This format is likely to change in the future to provide more more nuanced information about packages.
 
-### Future additions
-
-* Ability to specify local locations for packages
-* Specifying submodules in the deps file (doing so will allow for overriding)
-
 Note that the default overriding location mechanism used currently doesn't use links/softlinks it replaces paths in build files. That may not work for some scenarios.
+
+Putting the submodules into the json, allows for overridding a dependency to a specific path. Dependencies can be returned via 
+
+```
+local llvmPath = packProj.getDependencyPath("llvm")
+```
+
+To set a different path (than the usual external/llvm) use `-dep-path` option
+
+```
+premake5 vs2019 --arch=x64 --deps=true --llvm-dep-path=path-to-llvm
+```
 
 # slang-util module
 
