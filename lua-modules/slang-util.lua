@@ -191,6 +191,24 @@ function slangUtil.getTargetInfo()
     return info
 end
 
+--
+-- Get the name visual studio uses for 'platform' from the specified arch
+--
+
+function slangUtil.getVisualStudioPlatformName(arch)
+    local valueMap = 
+    {
+        x86 = "win32",
+        x86_64 = "x64",
+    }
+    
+    local value = valueMap[arch:lower()]
+    if value == nil then
+        return arch
+    else
+        return value
+    end
+end
 
 -- A function to return a name to place project files under 
 -- in build directory
