@@ -167,10 +167,19 @@ function slangUtil.getTargetInfo()
     local arch = _OPTIONS["arch"]
     if arch == nil then
         arch = "x86_64"
-    else
-        -- We allow Win32 as thats a convenient way to specify x86 on windows
-        if arch:lower() == "win32" then
-            arch = "x86"
+    else      
+        local valueMap = 
+        {
+            -- We allow Win32 as thats a convenient way to specify x86 on windows
+            win32 = "x86",
+            -- We allow x64 to mean x86_64 
+            x64 = "x86_64",
+        }
+        
+        local value = valueMap[arch:lower()]
+        
+        if value ~= nil then
+            arch = value
         end
     end
     
@@ -213,7 +222,7 @@ newoption {
    trigger     = "arch",
    description = "(Optional) The arch that is going to be built",
    value       = "string",
-   allowed     = { {"x86_64"}, {"x86"}, {"arm"}, {"aarch64"}, {"Win32", "Same as x86"}, {"win32", "Same as x86"} }
+   allowed     = { {"x86_64"}, {"x86"}, {"arm"}, {"aarch64"}, {"Win32", "Same as x86"}, {"win32", "Same as x86"}, {"x64", "Same as x86_64" } }
 }
 
 return slangUtil
