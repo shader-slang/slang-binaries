@@ -93,7 +93,7 @@ function slangPack.updateDependencies(platformName, jsonName)
       
         local platformPackage = packages[platformName]
         if platformPackage == nil then
-            return error("No package fro dependency '" .. dependencyName .. "' for target '" ..platform .. "'")
+            return error("No package for dependency '" .. dependencyName .. "' for target '" .. platformName .. "'")
         end
        
         local url = platformPackage
