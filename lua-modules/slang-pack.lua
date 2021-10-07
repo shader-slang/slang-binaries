@@ -58,9 +58,6 @@ function slangPack.updateDependencies(platformName, jsonName)
         jsonName = "deps/target-deps.json"
     end
     
-    -- Make noProgress a bool
-    noProgress = not not noProgress
-    
     -- Load the json
     local result, err = readJSONFromFile(jsonName)
     if err then
@@ -112,10 +109,25 @@ function slangPack.updateDependencies(platformName, jsonName)
         end
        
         -- We need to work out the filename.
+        -- Arguably this is a bit of a hack - we are using path to get a URL name after all.
+        -- but it works fine on platforms required.
         local packageFileName = path.getname(platformPackage)
         
+        -- We are going to store all of our packages in this path
+        local downloadsPath = "downloads"
+        -- Make sure the path exists
+        if not os.isdir(downloadsPath) then
+            os.mkdir(downloadsPath)
+        end
+        
+        -- The path the package will be downloaded to
+        local packagePath = path.join(downloadsPath, packageFileName)
+        
+        -- We create a 'part' filename, to identify a non fully downloaded path
+        local packagePartPath = packagePath .. ".part"
+        
+        -- The final dependency location
         local dependencyPath = path.join("external", dependencyName)
-        local packagePath = path.join("external", packageFileName)
         local packageInfoPath = path.join(dependencyPath, "package-info.json")
         
         -- Check if there is an expansion of the dependency
@@ -129,42 +141,48 @@ function slangPack.updateDependencies(platformName, jsonName)
             end
         end
         
-        -- We don't know it the package is complete as downloaded. As the user can cancel for example. 
-        -- So we delete what we have, so we can redownload a fresh copy.
-        --
-        -- NOTE! This means that there is only two states, either we download and extract everything (and mark with package-info.json)
-        -- Or we have the download dependency with the correct package-info.json (ie a previous download/extraction was fully 
-        -- successful)
-        if os.isfile(packagePath) then
-            print("Removing '" .. packagePath .. "' for fresh download")
-            os.remove(packagePath)
-        end
-
-        do
-            print("Downloading '" .. url .. "'")
-        
-            local result_str, response_code
-        
-            if noProgress then
-                result_str, response_code = http.download(url, packagePath, {})
-            else
-                result_str, response_code = http.download(url, packagePath, {progress = displayProgress})
-                -- Move down a line as progress repeatedly writes to same line
-                print("")
-            end
-             
-            if result_str == "OK" then
-            else
-                -- Delete what we have
-                return error("Unable to fully download '".. url .. "'")
-            end
+        -- If there is a part only it must be for a non completed download
+        if os.isfile(packagePartPath) then
+            -- So delete it
+            os.remove(packagePartPath)
         end    
         
+        -- 
+        -- Check if we have the download - if we do, we can just unzip that
+        --
         if not os.isfile(packagePath) then
-            -- It exists, so do nothing
-            return error("Destination path '" .. dstPath .. "' not found")
+            -- Okay download it then
+            do
+                print("Downloading '" .. url .. "'")
+            
+                local result_str, response_code
+            
+                if noProgress then
+                    result_str, response_code = http.download(url, packagePartPath, {})
+                else
+                    result_str, response_code = http.download(url, packagePartPath, {progress = displayProgress})
+                    -- Move down a line as progress repeatedly writes to same line
+                    print("")
+                end
+                 
+                if result_str == "OK" then
+                else
+                    -- Delete what we have
+                    return error("Unable to fully download '".. url .. "'")
+                end
+
+                -- Okay we can rename the .part to the package name as it completed ok
+                -- It's not documented on the website, but by examining os there is 'rename'
+                os.rename(packagePartPath, packagePath)
+            end 
+        end    
+        
+        -- Check we have the package
+        
+        if not os.isfile(packagePath) then
+            return error("Can't locate package download '" .. packagePath .. "'")
         end
-       
+      
         -- If the dependency path exists, delete it so we can extract into a new copy
        
         if os.isdir(dependencyPath) then
