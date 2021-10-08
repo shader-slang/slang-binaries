@@ -95,7 +95,7 @@ function slangUtil.toBool(v)
     if  v == "True" or v == "true" then
         return true
     end
-    if v == "False" or v == "false" then
+    if v == "False" or v == "false" or v == nil then
         return false
     end
     -- Returns nil as an error
