@@ -8,7 +8,48 @@
 
 local slangUtil = require("slang-util")
 
+-- Initialize the module table
+
 local slangPack =  {}
+
+--
+-- Dependencies class
+--
+
+-- Lets create a class to hold the dependencies
+
+local Dependencies = {}
+Dependencies.__index = Dependencies
+
+setmetatable(Dependencies, {
+    __call = function (cls, ...) 
+        return cls.new(...)
+    end,
+})
+
+function Dependencies.new(jsonProj)
+    local self = setmetatable({}, Dependencies)
+    -- Map of a dependency name to it's path on filesystem
+    self.paths = {}
+    -- Set the root of the json
+    self.jsonProj = jsonProj
+    -- The 'project' info (close to what's read from JSON) file
+    self.project = jsonProj.project
+    
+    return self
+end
+
+function Dependencies:getPath(name)
+    local path = self.paths[name]
+    if path == nil then
+        return error("Unknown dependency '" .. name .. "'")
+    end    
+    return path
+end
+
+function Dependencies:setPath(name, path)
+    self.paths[name] = path
+end
 
 local function displayProgress(total, current)  
     local ratio = current / total;  
@@ -35,22 +76,7 @@ local function readJSONFromFile(path)
     return json.decode(fileContents)
 end
 
-local function getDependencyPath(proj, name)
-
-    --slangUtil.dump(proj)
-    --slangUtil.dump(proj.dependencyPaths)
-
-    local path = proj.dependencyPaths[name]
-    
-    if path == nil then
-        return error("Unknown dependency '" .. path .. "'")
-    end
-    
-    return path
-end
-
-
-local function downloadPackage(proj, dependencyName, url)
+function Dependencies:updateDependencyFromURL(dependencyName, url)
 
     local noProgress = slangUtil.getBoolOption("no-progress")
     local downloadDep = slangUtil.getBoolOption("deps")
@@ -74,11 +100,10 @@ local function downloadPackage(proj, dependencyName, url)
     local packagePartPath = packagePath .. ".part"
     
     -- The final dependency location
-    local dependencyPath = proj:getDependencyPath(dependencyName)
+    local dependencyPath = self:getPath(dependencyName)
 
     -- Get the name of the file that marks what's in the directory
     local packageInfoPath = path.join(dependencyPath, "package-info.json")
-    
     
     -- Check if there is an expansion of the dependency
     if os.isdir(dependencyPath) then
@@ -97,7 +122,6 @@ local function downloadPackage(proj, dependencyName, url)
         -- So delete it
         os.remove(packagePartPath)
     end    
-    
     
     -- 
     -- Check if we have the download - if we do, we can just unzip that
@@ -135,9 +159,8 @@ local function downloadPackage(proj, dependencyName, url)
         end 
     end    
     
-    
     -- Check we have the package
-    
+  
     if not os.isfile(packagePath) then
         return error("Can't locate package download '" .. packagePath .. "'")
     end
@@ -169,14 +192,14 @@ local function isAbsoluteUrl(url)
 end
 
 
-local function loadProjectDependency(proj, dependency)
+function Dependencies:initDependency(dependency)
     local dependencyName = dependency["name"]
     if dependencyName == nil then
         return error("Dependency doesn't have a name")
     end
 
     -- Set the default dependency path
-    proj.dependencyPaths[dependencyName] = "external/" .. dependencyName
+    self:setPath(dependencyName, "external/" .. dependencyName)
 
     -- Add an option
     newoption 
@@ -227,79 +250,49 @@ local function loadProjectDependency(proj, dependency)
         if type(pack.path) ~= "string" then
             return error("No 'path' for '" .. dependencyName .. "/" .. platform .. "'")
         end    
-    end
-    
+    end    
 end
 
---
--- Load dependencies from specified file
---
-
-function slangPack.loadProject(jsonName)
-    if jsonName == nil then
-        jsonName = "deps/target-deps.json"
-    end
-    
-    -- Load the json
-    local proj, err = readJSONFromFile(jsonName)
-    if err then
-        return error(err)
-    end
-    
-    
-    -- Set up the dependency paths
-    proj.dependencyPaths = {}
-    proj.getDependencyPath = getDependencyPath
-    
+function Dependencies:init()    
     -- We want to now go through and determine if this seems valid
-    
+     
     -- Okay we have the json. We now need to work through the dependencies
-    local projectInfo = proj["project"]
+    local projectInfo = self.project
     if projectInfo == nil then
         return error("Expecting 'project' in json")
     end
     
-    local projectName = projectInfo["name"]
+    local dependencies = projectInfo.dependencies
     
-    -- If no dependencies we are done
-    local dependencies = projectInfo["dependencies"]
-    if dependencies == nil then
-        -- Just return the json as is
-        return proj
-    end
+    if dependencies ~= nil then
     
-    -- Examine the dependencies
-    for i, dependency in ipairs(dependencies) 
-    do
-        loadProjectDependency(proj, dependency)
-    end
-        
-    return proj
+        -- Initialize each dependency
+        for i, dependency in ipairs(dependencies) 
+        do
+            self:initDependency(dependency)
+        end
+    end    
 end
 
 --
 -- Update dependencies
 -- 
 
-function slangPack.updateDependencies(platformName, proj)   
+function Dependencies:update(platformName)
 
     -- Okay we have the json. We now need to work through the dependencies
-    local projectInfo = proj["project"]
-    if projectInfo == nil then
-        return error("Expecting 'project' in json")
-    end
-    
-    local projectName = projectInfo["name"]
+    local projectInfo = self.project 
+    local projectName = projectInfo.name
     
     -- If no dependencies we are done
-    local dependencies = projectInfo["dependencies"]
+    local dependencies = projectInfo.dependencies
     if dependencies == nil then
         return
     end
     
     for i, dependency in ipairs(dependencies) 
     do
-        local dependencyName = dependency["name"]
+        local dependencyName = dependency.name
             
         -- Check if the command line option has been set
         local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-dep-path"]
@@ -309,11 +302,11 @@ function slangPack.updateDependencies(platformName, proj)
                 return error("Path '" .. cmdLineDependencyPath .. "' for '" .. dependencyName .. "' not found")
             end
         
-            proj.dependencyPaths[dependencyName] = cmdLineDependencyPath
+            self:setPath(dependencyName, cmdLineDependencyPath)
         elseif dependency["type"] == "submodule" then
             -- We don't have to do something
             
-            local dependencyPath = proj:getDependencyPath(dependencyName)
+            local dependencyPath = self:getPath(dependencyName)
                 
             if not os.isdir(dependencyPath) then
                 return error("Path '" .. cmdLineDependencyPath .. "' for '" .. dependencyName .. "' not found. Try `git submodule update --init`")
@@ -339,7 +332,7 @@ function slangPack.updateDependencies(platformName, proj)
             
             if packageType == "path" then
                 -- Just set the path and we are done
-                proj.dependencyPaths[dependencyName] = packagePath
+                self.setPath(dependencyName, packagePath)
             elseif packageType == "url" then
                 local url = packagePath
                 
@@ -350,7 +343,7 @@ function slangPack.updateDependencies(platformName, proj)
                 end
                 
                 -- Download and extract from url
-                downloadPackage(proj, dependencyName, url)
+                self:updateDependencyFromURL(dependencyName, url)
                 
             else
                 return error("Unknown packageType '" .. packageType .. " for '" .. dependencyName .. "/" .. platformName .. "'")
@@ -359,6 +352,31 @@ function slangPack.updateDependencies(platformName, proj)
     end
 end
 
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! slangPack functions !!!!!!!!!!!!!!!!!!!!!!!!!!
+
+--
+-- Load dependencies from specified file
+--
+
+function slangPack.loadDependencies(jsonName)
+    if jsonName == nil then
+        jsonName = "deps/target-deps.json"
+    end
+    
+    -- Load the json
+    local proj, err = readJSONFromFile(jsonName)
+    if err then
+        return error(err)
+    end
+    
+    local deps = Dependencies.new(proj)
+    
+    -- Initialize it
+    deps:init()
+    
+    return deps
+end
+    
 -- Importing the module should make these automatically available
   
 newoption { 
