@@ -204,7 +204,7 @@ function Dependencies:initDependency(dependency)
     -- Add an option
     newoption 
     { 
-        trigger     = dependencyName .. "-dep-path",
+        trigger     = dependencyName .. "-path",
         description = "(Optional) Path for dependency " .. dependencyName,
         value       = "string",
     }
@@ -295,7 +295,7 @@ function Dependencies:update(platformName)
         local dependencyName = dependency.name
             
         -- Check if the command line option has been set
-        local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-dep-path"]
+        local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-path"]
       
         if type(cmdLineDependencyPath) == "string" then
             if not os.isdir(cmdLineDependencyPath) then

@@ -28,7 +28,7 @@ Just by loading the module it will add the following command line options
 
 That `--target-detail` and `--arch` are actually required by the `slang-util.lua` module that `slang-pack.lua` depends on. 
 
-If the `--deps=true` command line option is set initiate downloading/update the dependencies
+If the `--deps=true` command line option is set initiate downloading/update the dependencies.
 
 As it currently stands the dependency file is held at the location `deps/target-deps.json`. Packages are download into the 'downloads' directory. This directory can be deleted if needs be and packages will be redownloaded on demand.
 
@@ -61,20 +61,36 @@ A deps file looks something like
 }
 ```
 
-This format is likely to change in the future to provide more more nuanced information about packages.
+This format may change in the future to provide more more nuanced information about packages.
 
 Note that the default overriding location mechanism used currently doesn't use links/softlinks it replaces paths in build files. That may not work for some scenarios.
 
-Putting the submodules into the json, allows for overridding a dependency to a specific path. Dependencies can be returned via 
+Putting the submodules into the json, allows for overridding a dependency to a specific path. In use
 
 ```
+-- Get the slang-pack module
+slangPack = require("slang-pack")
+-- Get the slangUtil module - it is useful for determining the target
+slangUtil = require("slang-util")
+
+-- Load the dependencies from the json
+deps = slangPack.loadDependencies("deps/target-deps.json")
+
+-- Get the target info
+targetInfo = slangUtil.getTargetInfo()
+
+-- Update thet dependencies (may download packages etc)
+-- If there is a problem will panic with an error
+deps:update(targetInfo.name)
+
+-- Get the path where a dependency is located.
 local llvmPath = packProj.getDependencyPath("llvm")
 ```
 
-To set a different path (than the usual external/llvm) use `-dep-path` option
+It is often useful to specify a dependency from the command line. Every dependency will add a command line option with the same name and '-path' suffix. So for example if we have a dependency `llvm` we can just set the path that we want to use via
 
 ```
-premake5 vs2019 --arch=x64 --deps=true --llvm-dep-path=path-to-llvm
+premake5 vs2019 --arch=x64 --deps=true --llvm-path=path-to-llvm
 ```
 
 # slang-util module
