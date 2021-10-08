@@ -23,12 +23,12 @@ Just by loading the module it will add the following command line options
 
 * --arch= - Select the architecture/platform to build for. Necessary as will download packages and put in 'external' for *just* that arch/platform
 * --deps=[true,false] - If set will check if the current deps are correct and download and install 
-* --no-progress=[true,falgs] - If true, will *not* display a progress bar when downloading
+* --no-progress=[true,false] - If true, will *not* display a progress bar when downloading (useful for CI)
 * --target-detail=[cygwin,mingw] - Set to the name of target detail (for example if building for cygwin on windows)
 
 That `--target-detail` and `--arch` are actually required by the `slang-util.lua` module that `slang-pack.lua` depends on. 
 
-If the `--deps=true` command line option is set initiate downloading/update the dependencies.
+If the `--deps=true` command line option is set it allows the package manager to download dependencies. 
 
 As it currently stands the dependency file is held at the location `deps/target-deps.json`. Packages are download into the 'downloads' directory. This directory can be deleted if needs be and packages will be redownloaded on demand.
 
@@ -61,11 +61,9 @@ A deps file looks something like
 }
 ```
 
-This format may change in the future to provide more more nuanced information about packages.
+This format may change in the future to provide more more nuanced information about packages. Putting the submodules into the json, allows for overridding a dependency to a specific path. 
 
-Note that the default overriding location mechanism used currently doesn't use links/softlinks it replaces paths in build files. That may not work for some scenarios.
-
-Putting the submodules into the json, allows for overridding a dependency to a specific path. In use
+In use
 
 ```
 -- Get the slang-pack module
@@ -84,10 +82,10 @@ targetInfo = slangUtil.getTargetInfo()
 deps:update(targetInfo.name)
 
 -- Get the path where a dependency is located.
-local llvmPath = packProj.getDependencyPath("llvm")
+local llvmPath = deps:getPath("llvm")
 ```
 
-It is often useful to specify a dependency from the command line. Every dependency will add a command line option with the same name and '-path' suffix. So for example if we have a dependency `llvm` we can just set the path that we want to use via
+The `llvmPath` value can then be used to specify the path to the dependency in the build script. A project can just rely on a dependency being located in 'external' and this will work as expected, but by using the 'getPath' mechanism it's possible to change the dependency path on the command line. Every dependency will add a command line option with the same name and '-path' suffix. So for example if we have a dependency `llvm` we can just set the path that we want to use via `--llvm-path` option
 
 ```
 premake5 vs2019 --arch=x64 --deps=true --llvm-path=path-to-llvm
@@ -95,9 +93,9 @@ premake5 vs2019 --arch=x64 --deps=true --llvm-path=path-to-llvm
 
 # slang-util module
 
-Useful functionality used for premake. 
+A collection of useful functionality for making premake scripts. 
 
-In particular it provides functionality to identify and name a target via the 
+In particular it provides functionality to identify and name a target via 
 
 ```lua
 slangUtil = require("slang-util")
