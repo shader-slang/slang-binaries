@@ -126,6 +126,35 @@ function slangUtil.getExecutableSuffix(targetInfo)
 end
 
 -- 
+-- Given an array return as a 'set' (table with entries equating to true)
+--
+function slangUtil.arrayToSet(arr)
+    local t = {}
+    for i, value in ipairs(arr) 
+    do
+        t[value] = true
+    end
+    return t
+end
+
+-- 
+-- Split string by the *character* delimiter
+--
+function slangUtil.splitString(s, delimiter)
+    if delimiter == nil then
+        delimiter = "%s"
+    end
+    
+    local t = {}
+  
+    for str in string.gmatch(s, "([^" .. delimiter .. "]+)") 
+    do
+        table.insert(t, str)
+    end
+    return t
+end
+
+-- 
 -- Returns a table with the following values
 -- tokenName - The target name with premake tokens 
 -- isWindows - True if is windows
