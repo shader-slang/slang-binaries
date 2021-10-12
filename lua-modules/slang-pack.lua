@@ -41,14 +41,27 @@ end
 
 function Dependencies:getPath(name)
     local path = self.paths[name]
+    
     if path == nil then
         return error("Unknown dependency '" .. name .. "'")
     end    
+    
+    -- If the path is false then it's unavailable, and so we don't return a path
+    if path == false then
+        return nil
+    end
+    
     return path
 end
 
 function Dependencies:setPath(name, path)
     self.paths[name] = path
+end
+
+function Dependencies:setUnavailable(name)
+    -- We mark unavailable as 'false'. We don't use nil, because we can't differentiate that 
+    -- from not finding a path
+    self.paths[name] = false
 end
 
 local function displayProgress(total, current)  
@@ -76,7 +89,9 @@ local function readJSONFromFile(path)
     return json.decode(fileContents)
 end
 
-function Dependencies:updateDependencyFromURL(dependencyName, url)
+function Dependencies:updateDependencyFromURL(packageInfo, dependency, url)
+
+    local dependencyName = dependency.name
 
     local noProgress = slangUtil.getBoolOption("no-progress")
     local downloadDep = slangUtil.getBoolOption("deps")
@@ -209,8 +224,11 @@ function Dependencies:initDependency(dependency)
         value       = "string",
     }
 
+    -- Set if the dependency overall is optional
+    dependency.optional = not not dependency.optional
+
     -- If it's a submodule we are done
-    if dependency.type == "submodule" then
+    if dependency.type == "submodule" or dependency.type == "directory" then
         return
     end
 
@@ -222,6 +240,7 @@ function Dependencies:initDependency(dependency)
         url = true,
         path = true,
         submodule = true,
+        unavailable = true,
     }
     
     for platform, pack in pairs(packages)
@@ -230,20 +249,22 @@ function Dependencies:initDependency(dependency)
             -- We assume it is a url
             local packPath = pack
             pack = {
-                packageType = "url",
+                type = "url",
                 path = packPath
             }
-            
             packages[platform] = pack
         end 
+
+        -- Set if a specific package is optional 
+        pack.optional = not not pack.optional
 
         if type(pack) ~= "table" then
             return error("For dependency " .. dependencyName .. "/" .. platform .. " expecting table.")
         end
- 
+        
         -- Check the type
-        if not validPackageTypes[pack.packageType] then
-            return error("Invalid package type '" .. pack.packageType .. "' for dependency " .. dependencyName .. "/" .. platform .. ".")
+        if not validPackageTypes[pack["type"]] then
+            return error("Invalid package type '" .. pack["type"] .. "' for dependency " .. dependencyName .. "/" .. platform .. ".")
         end
         
         -- Check it has a path
@@ -252,6 +273,8 @@ function Dependencies:initDependency(dependency)
         end    
     end    
 end
+
+--- Initialize the dependencies
 
 function Dependencies:init()    
     -- We want to now go through and determine if this seems valid
@@ -271,8 +294,74 @@ function Dependencies:init()
         do
             self:initDependency(dependency)
         end
-    end    
+    end   
 end
+
+--
+-- Update a dependency
+-- 
+
+function Dependencies:updateDependency(dependency, platformName)
+    local dependencyName = dependency.name
+        
+    -- Check if the command line option has been set
+    local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-path"]
+  
+    if type(cmdLineDependencyPath) == "string" then
+        self:setPath(dependencyName, cmdLineDependencyPath)
+        return
+    end
+    
+    if dependency.type == "submodule" or dependency.type == "directory" then
+        -- If submodule or directory, we are done.
+        return
+    end
+    
+    -- Handle the different package types
+    
+    local baseUrl = dependency["baseUrl"]
+    local packages = dependency["packages"]
+  
+    if type(baseUrl) ~= "string" then
+        baseUrl = ""
+    end
+    
+    local packageInfo = packages[platformName]
+    if type(packageInfo) ~= "table" then
+        if dependency.optional then
+            -- If it's optional, we set an empty path to indicate it's not available
+            self:setUnavailable(dependencyName)
+            return
+        end
+        
+        return error("No package for dependency '" .. dependencyName .. "' for target '" .. platformName .. "'")
+    end
+    
+    local packageType = packageInfo["type"]
+    local packagePath = packageInfo.path
+    
+    if packageType == "path" then
+        -- Just set the path and we are done
+        self.setPath(dependencyName, packagePath)
+    elseif packageType == "url" then
+        local url = packagePath
+        
+        -- If it starts with file: we can just use the file
+        -- If it starts with dir: (say) then we just use the directory 
+        if not isAbsoluteUrl(url) then
+            url = baseUrl .. url
+        end
+        
+        -- Download and extract from url
+        self:updateDependencyFromURL(packageInfo, dependency, url)
+     
+    elseif packageType == "unavailable" then
+        -- If it's unavailable set as much 
+        self:setUnavailable(dependencyName)
+    else
+        return error("Unknown packageType '" .. packageType .. " for '" .. dependencyName .. "/" .. platformName .. "'")
+    end
+end    
 
 --
 -- Update dependencies
@@ -293,60 +382,24 @@ function Dependencies:update(platformName)
     for i, dependency in ipairs(dependencies) 
     do
         local dependencyName = dependency.name
-            
-        -- Check if the command line option has been set
-        local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-path"]
-      
-        if type(cmdLineDependencyPath) == "string" then
-            if not os.isdir(cmdLineDependencyPath) then
-                return error("Path '" .. cmdLineDependencyPath .. "' for '" .. dependencyName .. "' not found")
-            end
-        
-            self:setPath(dependencyName, cmdLineDependencyPath)
-        elseif dependency["type"] == "submodule" then
-            -- We don't have to do something
-            
-            local dependencyPath = self:getPath(dependencyName)
+    
+        self:updateDependency(dependency, platformName)
+    
+        -- Now check the dependency
+        local dependencyPath = self:getPath(dependencyName)
+
+        -- Does it exist?
+        if not dependencyPath == nil and not os.isdir(dependencyPath) then
+             
+            -- If it's not optional display an error
+            if not dependency.optional then                    
+                local msg = "Path '" .. dependencyPath .. "' for '" .. dependencyName .. "' not found."
                 
-            if not os.isdir(dependencyPath) then
-                return error("Path '" .. cmdLineDependencyPath .. "' for '" .. dependencyName .. "' not found. Try `git submodule update --init`")
-            end
-            
-        else
-            -- Handle the different package types
-            
-            local baseUrl = dependency["baseUrl"]
-            local packages = dependency["packages"]
-          
-            if type(baseUrl) ~= "string" then
-                baseUrl = ""
-            end
-            
-            local packageInfo = packages[platformName]
-            if type(packageInfo) ~= "table" then
-                return error("No package for dependency '" .. dependencyName .. "' for target '" .. platformName .. "'")
-            end
-            
-            local packageType = packageInfo.packageType
-            local packagePath = packageInfo.path
-            
-            if packageType == "path" then
-                -- Just set the path and we are done
-                self.setPath(dependencyName, packagePath)
-            elseif packageType == "url" then
-                local url = packagePath
-                
-                -- If it starts with file: we can just use the file
-                -- If it starts with dir: (say) then we just use the directory 
-                if not isAbsoluteUrl(url) then
-                    url = baseUrl .. url
+                if dependency.type == "submodule" then
+                    msg = msg .. " Try `git submodule update --init`"
                 end
                 
-                -- Download and extract from url
-                self:updateDependencyFromURL(dependencyName, url)
-                
-            else
-                return error("Unknown packageType '" .. packageType .. " for '" .. dependencyName .. "/" .. platformName .. "'")
+                return error(msg)            
             end
         end
     end

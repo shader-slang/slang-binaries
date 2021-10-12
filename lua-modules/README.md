@@ -42,10 +42,12 @@ A deps file looks something like
             {
                 "name" : "llvm",
                 "baseUrl" : "https://github.com/shader-slang/llvm-project/releases/download/slang-tot-14/",
+                "optional" : true,
                 "packages" : 
                 {
                     "windows-x86_64" : "llvm-tot-14-win64-Release.zip",
-                    "linux-x86_64" : "llvm-tot-14-linux-x86_64-Release.zip"
+                    "linux-x86_64" : "llvm-tot-14-linux-x86_64-Release.zip",
+                    "windows-aarch64" : { "type" : "unavailable" }
                 }
             },
             {
@@ -60,6 +62,12 @@ A deps file looks something like
     }
 }
 ```
+
+Note as it stands json parsing 
+
+* Does not allow trailing ,
+* Does not allow comments /**/ or //
+* Only reports a parsing error as a byte offset
 
 This format may change in the future to provide more more nuanced information about packages. Putting the submodules into the json, allows for overridding a dependency to a specific path. 
 
@@ -85,7 +93,13 @@ deps:update(targetInfo.name)
 local llvmPath = deps:getPath("llvm")
 ```
 
-The `llvmPath` value can then be used to specify the path to the dependency in the build script. A project can just rely on a dependency being located in 'external' and this will work as expected, but by using the 'getPath' mechanism it's possible to change the dependency path on the command line. Every dependency will add a command line option with the same name and '-path' suffix. So for example if we have a dependency `llvm` we can just set the path that we want to use via `--llvm-path` option
+The `llvmPath` value can then be used to specify the path to the dependency in the build script. A project can just rely on a dependency being located in 'external' and this will work as expected, but by using the 'getPath' mechanism it's possible to change the dependency path on the command line. 
+
+For optional dependencies if they are not available :getPath() will return nil. If will report an error if a dependency is requested that isn't defined. 
+
+Note that an inappropriate dependency does *not* delete the dependency directory. So it is possible to have a directory containing a different targets dependency.
+
+Every dependency will add a command line option with the same name and '-path' suffix. So for example if we have a dependency `llvm` we can just set the path that we want to use via `--llvm-path` option
 
 ```
 premake5 vs2019 --arch=x64 --deps=true --llvm-path=path-to-llvm
