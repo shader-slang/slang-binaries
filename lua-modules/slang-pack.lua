@@ -285,6 +285,15 @@ function Dependencies:init()
         return error("Expecting 'project' in json")
     end
     
+    -- Determine which deps are ignored
+    local ignoreDepsSet = {}        
+    do     
+        local ignoreDeps = _OPTIONS["ignore-deps"]
+        if type(ignoreDeps) == "string" then
+            ignoreDepsSet = slangUtil.arrayToSet(slangUtil.splitString(ignoreDeps, ","))
+        end
+    end    
+    
     local dependencies = projectInfo.dependencies
     
     if dependencies ~= nil then
@@ -292,7 +301,19 @@ function Dependencies:init()
         -- Initialize each dependency
         for i, dependency in ipairs(dependencies) 
         do
+            -- Initialize the dependency
             self:initDependency(dependency)
+         
+            -- Determine if this dependency can be ignored
+            local dependencyName = dependency.name
+         
+            dependency.ignore = not not ignoreDepsSet[dependencyName]
+    
+            -- If it's ignore, then it's also not available
+            if dependency.ignore then
+                self:setUnavailable(dependencyName)
+            end
+ 
         end
     end   
 end
@@ -303,6 +324,11 @@ end
 
 function Dependencies:updateDependency(dependency, platformName)
     local dependencyName = dependency.name
+            
+    -- If the dependency is ignored, then we don't need to do anything else
+    if dependency.ignore then
+        return
+    end
             
     -- Check if the command line option has been set
     local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-path"]
@@ -369,7 +395,6 @@ end
 
 function Dependencies:update(platformName)
 
-    -- Okay we have the json. We now need to work through the dependencies
     local projectInfo = self.project 
     local projectName = projectInfo.name
     
@@ -379,30 +404,21 @@ function Dependencies:update(platformName)
         return
     end
     
-    local ignoreDepsSet = {}    
-        
-    do     
-        local ignoreDeps = _OPTIONS["ignore-deps"]
-        if type(ignoreDeps) == "string" then
-            ignoreDepsSet = slangUtil.splitStringIntoSet(ignoreDeps, ",")
-        end
-    end    
-    
+    -- Work through each of the dependencies
     for i, dependency in ipairs(dependencies) 
     do
-        local dependencyName = dependency.name
-    
-        if ignoreDepsSet[dependencyName] then
-            -- If it's ignored then it's set as unavailable
-            self:setUnavailable(dependencyName)
+        if dependency.ignore then
+            -- If ignored, we are done
         else
+            local dependencyName = dependency.name
+            
             self:updateDependency(dependency, platformName)
         
             -- Now check the dependency
             local dependencyPath = self:getPath(dependencyName)
 
             -- Does it exist?
-            if not dependencyPath == nil and not os.isdir(dependencyPath) then
+            if dependencyPath ~= nil and not os.isdir(dependencyPath) then
                  
                 -- If it's not optional display an error
                 if not dependency.optional then                    

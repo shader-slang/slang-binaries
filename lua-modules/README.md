@@ -25,6 +25,7 @@ Just by loading the module it will add the following command line options
 * --deps=[true,false] - If set will check if the current deps are correct and download and install 
 * --no-progress=[true,false] - If true, will *not* display a progress bar when downloading (useful for CI)
 * --target-detail=[cygwin,mingw] - Set to the name of target detail (for example if building for cygwin on windows)
+* --ignore-deps= - A comma delimited list of dependencies to ignore. Ignoring will mean it doesn't download packages.
 
 That `--target-detail` and `--arch` are actually required by the `slang-util.lua` module that `slang-pack.lua` depends on. 
 
