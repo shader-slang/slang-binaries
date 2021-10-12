@@ -220,6 +220,20 @@ function slangUtil.getTargetInfo()
     return info
 end
 
+function slangUtil.getPremakeArchName(arch)
+    -- Returns an arch name as used by premake project
+    local tab = {
+        x86_64 = "x64"
+    }
+    
+    local v = tab[arch]
+    if v == nil then 
+        return arch
+    else
+        return v
+    end 
+end
+
 --
 -- Get the name visual studio uses for 'platform' from the specified arch
 --

@@ -64,6 +64,29 @@ function Dependencies:setUnavailable(name)
     self.paths[name] = false
 end
 
+function Dependencies:getProjectRelativePath(name, pathToRoot)
+    local depPath = self:getPath(name)
+    if depPath == nil then
+        return depPath
+    end
+    
+    -- If it's absolute, we are done
+    if path.isabsolute(depPath) then
+        return depPath
+    end
+    
+    -- This is a bit of a hack, but we want to identify if the path is one of the 'regular' 
+    -- dependency paths, because if it is, we can just join
+    
+    if depPath.startswith("external") then
+        -- We can just use a path that is relative using the pathToRoot
+        return path.join(pathToRoot, depPath)
+    end
+    
+    -- Get an absolute path, using the current path as base
+    return path.join(os.getcwd(), depPath)
+end
+
 local function displayProgress(total, current)  
     local ratio = current / total;  
     ratio = math.min(math.max(ratio, 0), 1);  
@@ -205,7 +228,6 @@ local function isAbsoluteUrl(url)
                string.startswith(url, "http://") or
                string.startswith(url, "file://") 
 end
-
 
 function Dependencies:initDependency(dependency)
     local dependencyName = dependency["name"]
