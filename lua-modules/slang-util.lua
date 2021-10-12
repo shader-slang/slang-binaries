@@ -125,6 +125,33 @@ function slangUtil.getExecutableSuffix(targetInfo)
     return ""
 end
 
+function slangUtil.splitStringIntoSet(s, delimiter)
+    local values = slangUtil.splitString(s, delimiter)
+    
+    local t = {}
+    
+    for i, value in ipairs(values) 
+    do
+        t[value] = true
+    end
+
+    return t
+end
+
+function slangUtil.splitString(s, delimiter)
+    if delimiter == nil then
+        delimiter = "%s"
+    end
+    
+    local t = {}
+    
+    for str in string.gmatch(s, "([^" .. delimiter .. "]+)") 
+    do
+        table.insert(t, str)
+    end
+    return t
+end
+
 -- 
 -- Returns a table with the following values
 -- tokenName - The target name with premake tokens 

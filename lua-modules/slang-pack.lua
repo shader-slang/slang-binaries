@@ -303,7 +303,7 @@ end
 
 function Dependencies:updateDependency(dependency, platformName)
     local dependencyName = dependency.name
-        
+            
     -- Check if the command line option has been set
     local cmdLineDependencyPath = _OPTIONS[dependencyName .. "-path"]
   
@@ -379,27 +379,41 @@ function Dependencies:update(platformName)
         return
     end
     
+    local ignoreDepsSet = {}    
+        
+    do     
+        local ignoreDeps = _OPTIONS["ignore-deps"]
+        if type(ignoreDeps) == "string" then
+            ignoreDepsSet = slangUtil.splitStringIntoSet(ignoreDeps, ",")
+        end
+    end    
+    
     for i, dependency in ipairs(dependencies) 
     do
         local dependencyName = dependency.name
     
-        self:updateDependency(dependency, platformName)
-    
-        -- Now check the dependency
-        local dependencyPath = self:getPath(dependencyName)
+        if ignoreDepsSet[dependencyName] then
+            -- If it's ignored then it's set as unavailable
+            self:setUnavailable(dependencyName)
+        else
+            self:updateDependency(dependency, platformName)
+        
+            -- Now check the dependency
+            local dependencyPath = self:getPath(dependencyName)
 
-        -- Does it exist?
-        if not dependencyPath == nil and not os.isdir(dependencyPath) then
-             
-            -- If it's not optional display an error
-            if not dependency.optional then                    
-                local msg = "Path '" .. dependencyPath .. "' for '" .. dependencyName .. "' not found."
-                
-                if dependency.type == "submodule" then
-                    msg = msg .. " Try `git submodule update --init`"
+            -- Does it exist?
+            if not dependencyPath == nil and not os.isdir(dependencyPath) then
+                 
+                -- If it's not optional display an error
+                if not dependency.optional then                    
+                    local msg = "Path '" .. dependencyPath .. "' for '" .. dependencyName .. "' not found."
+                    
+                    if dependency.type == "submodule" then
+                        msg = msg .. " Try `git submodule update --init`"
+                    end
+                    
+                    return error(msg)            
                 end
-                
-                return error(msg)            
             end
         end
     end
@@ -438,6 +452,12 @@ newoption {
     value       = "bool",
     default     = "false",
     allowed     = { { "true", "True"}, { "false", "False" } }
+}
+
+newoption { 
+    trigger     = "ignore-deps",
+    description = "(Optional) Comma delimited list of dependencies to make unavailable",
+    value       = "string"
 }
 
 newoption { 
