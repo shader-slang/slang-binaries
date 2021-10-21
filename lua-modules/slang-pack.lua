@@ -187,11 +187,10 @@ function Dependencies:updateDependencyFromURL(packageInfo, dependency, url)
              
             if result_str == "OK" then
             else
-                -- Delete what we have
-                return error("Unable to fully download '".. url .. "'")
+                return error("Unable to download '" .. url .. "' " .. result_str .. " code:" .. response_code)
             end
 
-            -- Okay we can rename the .part to the package name as it completed ok
+            -- We can rename the .part to the package name as it completed ok
             -- It's not documented on the website, but by examining os there is 'rename'
             os.rename(packagePartPath, packagePath)
         end 
