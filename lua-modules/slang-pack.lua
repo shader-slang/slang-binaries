@@ -78,7 +78,7 @@ function Dependencies:getProjectRelativePath(name, pathToRoot)
     -- This is a bit of a hack, but we want to identify if the path is one of the 'regular' 
     -- dependency paths, because if it is, we can just join
     
-    if depPath.startswith("external") then
+    if depPath:startswith("external") then
         -- We can just use a path that is relative using the pathToRoot
         return path.join(pathToRoot, depPath)
     end
