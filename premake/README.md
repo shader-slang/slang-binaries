@@ -63,3 +63,16 @@ make config=release
 ```
 
 You should now have binaries in the path from the root of `bin/release'. 
+
+Certificates
+============
+
+Certificates that are known to work correctly on linux with premake are located in `slang-binaries` repo `certificate/linux/ca-bundle.crt`. 
+This certificate bundle is from CentOS 7, and may need to be updated if certificates change.
+
+For example from the slang root, with slang-binaries submodule
+
+```
+export CURL_CA_BUNDLE=external/slang-binaries/certificate/linux/ca-bundle.crt
+premake gmake --deps=true 
+```
