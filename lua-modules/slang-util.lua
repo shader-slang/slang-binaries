@@ -159,7 +159,7 @@ end
 -- shared library/dll filename
 --
 function slangUtil.getSharedLibraryFileName(targetInfo, name)
-    local osName = targetInfo.osName
+    local osName = targetInfo.os
     if osName == "cygwin" or osName == "windows" or osName == "mingw" then
         return name .. ".dll"
     elseif osName == "macosx" then
