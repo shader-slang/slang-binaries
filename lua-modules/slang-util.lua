@@ -154,6 +154,21 @@ function slangUtil.splitString(s, delimiter)
     return t
 end
 
+--
+-- Given a library name, returns the operating system specific
+-- shared library/dll filename
+--
+function slangUtil.getSharedLibraryFileName(targetInfo, name)
+    local osName = targetInfo.osName
+    if osName == "cygwin" or osName == "windows" or osName == "mingw" then
+        return name .. ".dll"
+    elseif osName == "macosx" then
+        return "lib" .. name .. ".dylib"
+    else
+        return "lib" .. name .. ".so"
+    end    
+end
+
 -- 
 -- Returns a table with the following values
 -- tokenName - The target name with premake tokens 
