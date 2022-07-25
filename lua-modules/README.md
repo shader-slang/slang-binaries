@@ -72,6 +72,21 @@ Note as it stands json parsing
 
 This format may change in the future to provide more more nuanced information about packages. Putting the submodules into the json, allows for overridding a dependency to a specific path. 
 
+The dependencies section holds an *array* of packages. Each package must contain a `name` which is how the dependency is identified. A dependency can contain a `type` valid dependency types are
+
+* `submodule` - The dependency is a git submodule which is held at the path "externals/dependency-name", assumed up to date via `git submodule update`
+* `directory` - The dependency (for the desired target) is in the specified directory (this is similar to `submodule`, but doesn't assume it's origin is via `git`) 
+* `packages` - Use the specified packages (the default if a type isn't specified)
+
+If a dependency type is *not* specified, it is assumed that there is a `packages` entry which describes a package per target describing the dependency.
+
+The packages section of a dependency is a map from a `target` (platform and arch combination) to where that package is located. If a string is used it will assumed to be an url, if it's a table then a `type` can be specified 
+
+* `url` - Package is stored at specified url/s held in packages.
+* `path` - Path to the unziped package on the file system (this path will be returned from `:getPath()`)
+* `submodule` - Means the module is a git submodule that will be held in the `externals/name` directory
+* `unavailable` - The package isn't available for this target
+
 In use
 
 ```
@@ -96,7 +111,7 @@ local llvmPath = deps:getPath("llvm")
 
 The `llvmPath` value can then be used to specify the path to the dependency in the build script. A project can just rely on a dependency being located in 'external' and this will work as expected, but by using the 'getPath' mechanism it's possible to change the dependency path on the command line. 
 
-For optional dependencies if they are not available :getPath() will return nil. If will report an error if a dependency is requested that isn't defined. 
+For `optional` dependencies if they are not available :getPath() will return nil. If will report an error if a dependency is requested that isn't defined. 
 
 Note that an inappropriate dependency does *not* delete the dependency directory. So it is possible to have a directory containing a different targets dependency.
 
