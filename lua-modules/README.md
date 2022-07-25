@@ -74,7 +74,7 @@ This format may change in the future to provide more more nuanced information ab
 
 The dependencies section holds an *array* of packages. Each package must contain a `name` which is how the dependency is identified. A dependency can contain a `type`. Valid dependency types are
 
-* `submodule` - The dependency is a git submodule which is held at the path "externals/dependency-name", assumed up to date via `git submodule update`
+* `submodule` - The dependency is a git submodule which is held at the path "external/dependency-name", assumed up to date via `git submodule update`
 * `directory` - The dependency is in the specified directory (this is similar to `submodule`, but doesn't assume it's origin is via a `git` submodule) 
 * `packages` - Use the specified packages (the default if a type isn't specified)
 
@@ -84,7 +84,7 @@ The `packages` table is a map from a `target` (platform and arch combination) to
 
 * `url` - Package is stored at specified url 
 * `path` - Path to the unziped package on the file system (this path will be returned from `:getPath()`)
-* `submodule` - Means the module is a git submodule that will be held in the `externals/name` directory
+* `submodule` - Means the module is a git submodule that will be held in the `external/name` directory
 * `unavailable` - The package isn't available for this target
 
 If a url is absolute it will be used as if. If it isn't the final url will be the combination of the `baseUrl` in the dependency and the path specified in the package for the target.
