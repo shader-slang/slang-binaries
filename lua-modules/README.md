@@ -72,9 +72,26 @@ Note as it stands json parsing
 
 This format may change in the future to provide more more nuanced information about packages. Putting the submodules into the json, allows for overridding a dependency to a specific path. 
 
-In use
+The dependencies section holds an *array* of packages. Each package must contain a `name` which is how the dependency is identified. A dependency can contain a `type`. Valid dependency types are
 
-```
+* `submodule` - The dependency is a git submodule which is held at the path "external/dependency-name", assumed up to date via `git submodule update`
+* `directory` - The dependency is in the specified directory (this is similar to `submodule`, but doesn't assume it's origin is via a `git` submodule) 
+* `packages` - Use the specified packages (the default if a type isn't specified)
+
+If a dependency type is *not* specified, it is assumed that there is a `packages` entry which describes a package per target.
+
+The `packages` table is a map from a `target` (platform and arch combination) to where that package is located. If a string is used it will assumed to be an url, if it's a table then a `type` can be specified. Current package types are  
+
+* `url` - Package is stored at specified url 
+* `path` - Path to the unziped package on the file system (this path will be returned from `:getPath()`)
+* `submodule` - Means the module is a git submodule that will be held in the `external/name` directory
+* `unavailable` - The package isn't available for this target
+
+If a url is absolute it will be used as if. If it isn't the final url will be the combination of the `baseUrl` in the dependency and the path specified in the package for the target.
+
+In use...
+
+```lua
 -- Get the slang-pack module
 slangPack = require("slang-pack")
 -- Get the slangUtil module - it is useful for determining the target
@@ -96,7 +113,7 @@ local llvmPath = deps:getPath("llvm")
 
 The `llvmPath` value can then be used to specify the path to the dependency in the build script. A project can just rely on a dependency being located in 'external' and this will work as expected, but by using the 'getPath' mechanism it's possible to change the dependency path on the command line. 
 
-For optional dependencies if they are not available :getPath() will return nil. If will report an error if a dependency is requested that isn't defined. 
+For `optional` dependencies if they are not available :getPath() will return nil. Normal behavior for a non-`optional` dependency is to report an error if not found or defined. 
 
 Note that an inappropriate dependency does *not* delete the dependency directory. So it is possible to have a directory containing a different targets dependency.
 

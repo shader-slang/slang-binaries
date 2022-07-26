@@ -359,10 +359,27 @@ function Dependencies:updateDependency(dependency, platformName)
         return
     end
     
-    if dependency.type == "submodule" or dependency.type == "directory" then
-        -- If submodule or directory, we are done.
-        return
-    end
+    -- Get the dependency type (if set)
+    local dependencyType = dependency["type"]
+    
+    if type(dependencyType) == "string" then         
+        local validDependencyTypes = 
+        {
+            submodule = true,
+            directory = true,
+            packages = true,
+        }
+
+        -- Check the type
+        if not validDependencyTypes[dependencyType] then
+            return error("Invalid dependency type '" .. dependencyType .. "' for dependency " .. dependencyName .. ".")
+        end
+
+        if dependencyType == "submodule" or dependencyType == "directory" then
+            -- If submodule or directory, we are done.
+            return
+        end
+    end    
     
     -- Handle the different package types
     
