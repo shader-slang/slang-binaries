@@ -1,81 +1,58 @@
 # premake
 
-Slang and many of it's surrounding libraries use [premake](https://premake.github.io/). 
+Slang and many of its surrounding libraries use [premake](https://premake.github.io/). 
 
-This directory holds binaries for premake. For windows, macos and linux it is possible to use the premake binaries that 
+For windows, macos and linux it is possible to use the premake binaries that 
 are downloadable directly from the [premake download page](https://premake.github.io/download/).
 
-Linux Certificates Issue
+This directory holds binaries for premake for use when the official binaries
+are not portable enough.
+
+Linux Portability Issues
 ========================
 
-`slang-pack` uses the http module in premake to download packages. It is common for packages to be located at https based urls. For https to work premake needs
-to verify certificates, by using a 'certificate bundle'. By default premake is built using `/etc/ssl/cert.pem` as the package bundle location. 
+Where possible, just use the version of premake5 (beta2 or newer) provided by
+your distribution.
 
-Unfortunately this doesn't appear to work some linux versions. For example CentOS 7, has it's certificates located at `/etc/ssl/certs/ca-bundle.crt`.
+The official binaries from premake rely on a hardcoded paths to both the
+system's certificate bundle (whatever was available on the distributor's
+machine) and the interpreter, both of which reduce their portability.
 
-Normal `premake` builds do not allow for specifying where certificates are located. To work around this problem we build a special version of 
-premake which requires the certificate bundle to be specified in the `CURL_CA_BUNDLE` environment parameter. This binary is in the centos-7-x64 directory. 
-The binary is built for CentOS 7 because this linux distro initially had the problem, and also because CentOS 7 binaries have a high success of working 
-across other distros.
+If your distribution doesn't package a new enough version of premake5, and you
+can't build premake5 from source yourself, and the binary releases from
+premake5 can't find their expected interpreter or ca bundle then you can use
+one of the more portable premake5 binaries in this repository.
 
-Note that the `CURL_CA_BUNDLE` *must* be specified for CentOS 7 binary otherwise downloads via `https` will cause an error of the form:
+If you have libcurl installed you can use `curl-config --ca` to get the
+location to a certificate bundle.
 
-```
-Error: .../external/slang-binaries/lua-modules/slang-pack.lua:190: Unable to download 'https://github.com/shader-slang/slang-llvm/releases/download/v13.x-19/slang-llvm-v13.x-19-linux-x86_64-release.zip' 
-SSL peer certificate or SSH remote key was not OK
-Cert verify failed: BADCERT_NOT_TRUSTED
-code:0.0
-```
+For example, if the certificate bundle is located in the file
+`/etc/ssl/certs/ca-bundle.crt` premake5 can be invoked by first setting the
+`CURL_CA_BUNDLE` as shown below
 
-If the certificate bundle is located in the file `/etc/ssl/certs/ca-bundle.crt` premake can be invoked by first setting the `CURL_CA_BUNDLE` as shown below
-
-```
-export CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
-premake5 gmake --deps=true 
+```bash
+CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt premake5 gmake2 --deps=true 
 ```
 
-Building CentOS 7 premake
-=========================
+Building a more portable premake
+================================
 
-First download the [premake source](https://premake.github.io/download/) this package will have the projects in a state ready to build. 
+[`flake.nix`](./flake.nix) contains an expression to build static,
+ca-bundle-location-agnostic premake binaries for `i686-linux`, `x86_64-linux`
+and `aarch64-linux`; run `nix build --system x86_64-linux` for example.
 
-In `build/gmake2.unix` directory, first we want to add `-std=c99` in the file `mbedtls-lib.make`
+To perform these steps manually:
 
-```
-ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES) -std=c99
-```
+- Ensure you have gcc, libuuid and gnumake installed
+- Download the [premake source](https://premake.github.io/download/) this
+  package will have the projects in a state ready to build. 
+- As described in [`env-ca-bundle.patch`](./env-ca-bundle.patch), replace the
+  define of `CURL_CA_BUNDLE=ca` with `CURL_WANTS_CA_BUNDLE_ENV`
+- Run `make -f Bootstrap.mak linux`
 
-Without this change building `mbedtls` fails. 
-
-Now we want to `CURL_CA_BUNDLE` specify the certificate bundle. Edit `curl-lib.make` and replace all of (there are more than one)
-
-```
--DCURL_CA_BUNDLE=\"/etc/ssl/cert.pem\"
-```
-
-with
-
-```
--DCURL_WANTS_CA_BUNDLE_ENV
-```
-
-Now we can build [build premake](https://github.com/premake/premake-core/blob/master/BUILD.txt) with:
-
-```
-make config=release
-```
+Use your favourite libmusl-static toolchain and `s/SharedLib/StaticLib` in
+`binmodules/{examples,luasocket}/premake5.lua` the premake source tree to get
+a static binary. 
 
 You should now have binaries in the path from the root of `bin/release'. 
 
-Certificates
-============
-
-Certificates that are known to work correctly on linux with premake are located in `slang-binaries` repo in the file `certificate/linux/ca-bundle.crt`. 
-This certificate bundle is from CentOS 7, and may need to be updated if certificates change.
-
-For example from the slang root, with slang-binaries submodule
-
-```
-export CURL_CA_BUNDLE=external/slang-binaries/certificate/linux/ca-bundle.crt
-premake gmake --deps=true 
-```
