@@ -2,7 +2,7 @@
   description = "A cross or static build of spirv-tools";
 
   inputs.nixpkgs.url =
-    "github:NixOS/nixpkgs/88c052545610b9ee3e9b25144d855e897ce7728b";
+    "github:NixOS/nixpkgs/4cba8b53da471aea2ab2b0c1f30a81e7c451f4b6";
 
   outputs = { self, nixpkgs }:
     let
@@ -16,11 +16,19 @@
           static = pkgs.pkgsStatic.spirv-tools;
           cross = forall crossSystems (crossSystem:
             with pkgs.pkgsCross.${crossSystem};
-            spirv-tools.overrideAttrs (old: {
-              # Bundle this necessary dll with the binaries
-              postInstall = "cp ${windows.mcfgthreads_pre_gcc_13}/bin/* $out/bin";
-            })
-          );
+            spirv-tools.override {
+              stdenv =
+                if (stdenv.cc.isGNU && stdenv.targetPlatform.isWindows) then
+                  overrideCC stdenv (buildPackages.wrapCC
+                    (buildPackages.gcc-unwrapped.override ({
+                      threadsCross = {
+                        model = "win32";
+                        package = null;
+                      };
+                    })))
+                else
+                  stdenv;
+            });
         });
     };
 }
