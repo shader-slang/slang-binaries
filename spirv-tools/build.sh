@@ -4,6 +4,7 @@ set -e
 shopt -s nullglob
 
 go() {
+  echo "Building version $(nix eval ".#cross.$1.version" --raw) for $2" 
   out=$(nix build --print-out-paths ".#cross.$1.out")
   mkdir -p "./$2/bin"
   cp "$out"/bin/{spirv-dis*,spirv-val*,*.dll} "./$2/bin"
