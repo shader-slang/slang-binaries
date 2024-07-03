@@ -7,7 +7,8 @@
   outputs = { self, nixpkgs }:
     let
       nativeSystems = [ "i686-linux" "x86_64-linux" "aarch64-linux" ];
-      crossSystems = [ "mingw32" "mingwW64" "aarch64-multiplatform-musl" "musl32" "musl64" ];
+      crossSystems =
+        [ "mingw32" "mingwW64" "aarch64-multiplatform-musl" "musl32" "musl64" ];
       forall = nixpkgs.lib.attrsets.genAttrs;
     in {
       packages = forall nativeSystems (system:
@@ -16,12 +17,19 @@
           static = pkgs.pkgsStatic.spirv-tools;
           cross = forall crossSystems (crossSystem:
             with pkgs.pkgsCross.${crossSystem};
-            if pkgs.lib.strings.hasPrefix "mingw" crossSystem then
-              spirv-tools.overrideAttrs (old: {
-                # Bundle this necessary dll with the binaries
-                postInstall =
-                  "cp ${windows.mcfgthreads_pre_gcc_13}/bin/* $out/bin";
-              })
+            if targetPlatform.isWindows then
+              # For windows targets, use the native win32 threading model to
+              # avoid having to package mcfgthreads.dll
+              spirv-tools.override {
+                stdenv = overrideCC stdenv (stdenv.cc.override (old: {
+                  cc = old.cc.override {
+                    threadsCross = {
+                      model = "win32";
+                      package = null;
+                    };
+                  };
+                }));
+              }
             else
               pkgsStatic.spirv-tools);
         });
