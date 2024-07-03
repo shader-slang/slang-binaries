@@ -3,16 +3,17 @@
 set -e
 shopt -s nullglob
 
-go() {
-  echo "Building version $(nix eval ".#cross.$1.version" --raw) for $2" 
-  out=$(nix build --print-out-paths --no-link ".#cross.$1.out")
-  mkdir -p "./$2/bin"
-  cp "$out"/bin/{spirv-dis*,spirv-val*,*.dll} "./$2/bin"
-  chmod -R u+w "$2"
-}
+declare -A targets=(
+  [x86_64-linux]="musl64"
+  [i686-linux]="musl32"
+  [aarch64-linux]="aarch64-multiplatform-musl"
+  [windows-x86]="mingw32"
+  [windows-x64]="mingwW64"
+)
 
-go musl64 x86_64-linux
-go musl32 i686-linux
-go aarch64-multiplatform-musl aarch64-linux
-go mingw32 windows-x86
-go mingwW64 windows-x64
+for target_dir in "${!targets[@]}"; do
+  read -r out
+  mkdir -p "./$target_dir/bin"
+  cp "$out"/bin/{spirv-dis*,spirv-val*,*.dll} "./$target_dir/bin"
+  chmod -R u+w "$target_dir"
+done < <(nix build --print-out-paths --no-link "${targets[@]/#/.#cross.}")
