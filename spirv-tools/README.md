@@ -17,9 +17,9 @@ run [`./build.sh`](./build.sh).
 For manual usage it has the following targets defined:
 
 ```bash
-# `cross.mingw32` and `cross.mingwW64` for Windows builds
+# `cross.mingw32` and `cross.ucrt64` for Windows 32 bit and 64 bit builds
 nix build .#cross.mingw32
-nix build .#cross.mingwW64
+nix build .#cross.ucrt64
 # `cross.aarch64-multiplatform-musl` for a cross aarch64 build
 nix build .#cross.aarch64-multiplatform-musl
 # `cross.musl32`, `cross.musl64` for cross i686/x86_64 builds

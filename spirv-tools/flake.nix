@@ -8,7 +8,7 @@
     let
       nativeSystems = [ "i686-linux" "x86_64-linux" "aarch64-linux" ];
       crossSystems =
-        [ "mingw32" "mingwW64" "aarch64-multiplatform-musl" "musl32" "musl64" ];
+        [ "mingw32" "mingwW64" "ucrt64" "aarch64-multiplatform-musl" "musl32" "musl64" ];
       forall = nixpkgs.lib.attrsets.genAttrs;
     in {
       packages = forall nativeSystems (system:

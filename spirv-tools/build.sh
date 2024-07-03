@@ -8,7 +8,7 @@ declare -A targets=(
   [i686-linux]="musl32"
   [aarch64-linux]="aarch64-multiplatform-musl"
   [windows-x86]="mingw32"
-  [windows-x64]="mingwW64"
+  [windows-x64]="ucrt64"
 )
 
 for target_dir in "${!targets[@]}"; do
