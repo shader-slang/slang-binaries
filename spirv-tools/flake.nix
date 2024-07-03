@@ -2,7 +2,7 @@
   description = "A cross or static build of spirv-tools";
 
   inputs.nixpkgs.url =
-    "github:NixOS/nixpkgs/88c052545610b9ee3e9b25144d855e897ce7728b";
+    "github:NixOS/nixpkgs/81b32b3a74c49adc9fec91aac693e966f3f51307";
 
   outputs = { self, nixpkgs }:
     let
