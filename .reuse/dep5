@@ -1,0 +1,16 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Slang Binaries
+Upstream-Contact: The Khronos Group, Inc.
+Source: https://github.com/shader-slang/slang-binaries
+
+Files: spirv-tools
+Copyright: 2024 The Khronos Group, Inc.
+License: Apache-2.0
+
+Files: bin
+Copyright: Microsoft
+License: D3D
+
+Files: CODE_OF_CONDUCT.md CONTRIBUTING.md README.md
+Copyright: 2024 The Khronos Group, Inc.
+License: CC-BY-4.0
