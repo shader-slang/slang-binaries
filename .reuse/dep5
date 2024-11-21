@@ -3,14 +3,13 @@ Upstream-Name: Slang Binaries
 Upstream-Contact: The Khronos Group, Inc.
 Source: https://github.com/shader-slang/slang-binaries
 
-Files: *
-Copyright: 2016, Carnegie Mellon University and NVIDIA Corporation
-           2024 The Khronos Group, Inc.
-License: Apache-2.0 WITH LLVM-exception
-
 Files: spirv-tools
 Copyright: 2024 The Khronos Group, Inc.
 License: Apache-2.0
+
+Files: bin
+Copyright: Microsoft
+License: D3D
 
 Files: CODE_OF_CONDUCT.md CONTRIBUTING.md README.md
 Copyright: 2024 The Khronos Group, Inc.
