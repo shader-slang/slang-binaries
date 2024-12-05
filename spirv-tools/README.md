@@ -14,6 +14,15 @@ a pretty vanilla CMake project with no dependencies).
 As a convenience a Nix flake is included here. To just build everything with it
 run [`./build.sh`](./build.sh).
 
+* Note: Since Nix 2.4, an argument was required to explicitly opt-in to
+  unstable features like 'nix build' using a configuration setting or command-line
+  argument. Older versions of Nix do not require the opt-in.
+
+It is recommended to add support in your /etc/var/nix.conf file if you've a 2.4+
+nix version as follows:
+
+    experimental-features = nix-command flakes
+
 For manual usage it has the following targets defined:
 
 ```bash

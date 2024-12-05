@@ -14,6 +14,6 @@ declare -A targets=(
 for target_dir in "${!targets[@]}"; do
   read -r out
   mkdir -p "./$target_dir/bin"
-  cp "$out"/bin/{spirv-dis*,spirv-val*,*.dll} "./$target_dir/bin"
+  cp "$out"/bin/{spirv-dis*,spirv-val*,spirv-link*,*.dll} "./$target_dir/bin"
   chmod -R u+w "$target_dir"
 done < <(nix build --print-out-paths --no-link "${targets[@]/#/.#cross.}")
