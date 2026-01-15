@@ -1,0 +1,1 @@
+This file is a collection of third-party CA certificates. The project makes no assertion about copyright or licensing of the individual certificates. Use/distribution may be subject to issuer terms.

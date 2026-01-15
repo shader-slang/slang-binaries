@@ -1,0 +1,34 @@
+version = 1
+SPDX-PackageName = "Slang Binaries"
+SPDX-PackageSupplier = "The Khronos Group, Inc."
+SPDX-PackageDownloadLocation = "https://github.com/shader-slang/slang-binaries"
+
+[[annotations]]
+path = "spirv-tools/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 The Khronos Group, Inc."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [".github/**", ".gitignore"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 The Khronos Group, Inc."
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = "certificate/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "LicenseRef-CA-Bundle-NOASSERTION"
+SPDX-License-Identifier = "LicenseRef-CA-Bundle-NOASSERTION"
+
+[[annotations]]
+path = "bin/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Microsoft"
+SPDX-License-Identifier = "LicenseRef-Microsoft-DirectX"
+
+[[annotations]]
+path = ["CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "README.md"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 The Khronos Group, Inc."
+SPDX-License-Identifier = "CC-BY-4.0"
