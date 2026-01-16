@@ -28,6 +28,27 @@ SPDX-FileCopyrightText = "Microsoft"
 SPDX-License-Identifier = "LicenseRef-Microsoft-DirectX"
 
 [[annotations]]
+path = [
+    "bin/windows-aarch64/*",
+    "bin/windows-x64/dxcompiler.dll",
+    "bin/windows-x64/dxil.dll",
+    "bin/windows-x86/dxcompiler.dll",
+    "bin/windows-x86/dxil.dll"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Microsoft"
+SPDX-License-Identifier = "LLVM-exception"
+
+[[annotations]]
+path = [
+    "bin/windows-x64/d3dcompiler_47.dll",
+    "bin/windows-x86/d3dcompiler_47.dll",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Microsoft"
+SPDX-License-Identifier = "LicenseRef-Microsoft-Windows-SDK"
+
+[[annotations]]
 path = ["CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "README.md"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024 The Khronos Group, Inc."
