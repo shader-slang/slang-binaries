@@ -37,7 +37,7 @@ path = [
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Microsoft"
-SPDX-License-Identifier = "LLVM-exception"
+SPDX-License-Identifier = "NCSA"
 
 [[annotations]]
 path = [
